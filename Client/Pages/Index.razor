@@ -1,4 +1,105 @@
 ﻿@page "/"
+@inject NotificationService notifiyService
+
 <PageTitle>Obywatel ver 1.0</PageTitle>
-<h1>Formularz</h1>
+<h1>Formularz rejestracji Obywatela</h1>
+
+<div class="row mt-3">
+    <div class="col-lg-6">
+        
+        <div class="row">
+            <div class="col-lg-4">
+                <RadzenLabel Text="Pierwsze imię"/>
+                <RadzenTextBox style="width: 100%;" Name="Pierwsze imię" @bind-Value="@model.FirstName"/>
+            </div>
+            <div class="col-lg-4">
+                <RadzenLabel Text="Drugie imię"/>
+                <RadzenTextBox style="width: 100%;" Name="Drugie imię" @bind-Value="@model.SecondName"/>
+            </div>
+            <div class="col-lg-4">
+                <RadzenLabel Text="Nazwisko"/>
+                <RadzenTextBox style="width: 100%;" Name="Nazwisko" @bind-Value=@model.LastName/>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-lg-4">
+                <RadzenLabel Text="Data urodzenia"/>
+                <RadzenDatePicker DateFormat="d" Class="w-100" Name="Data urodzenia" @bind-Value="@model.DateOfBirth"/>
+            </div>
+            <div class="col-lg-8">
+                <RadzenLabel Text="Płeć"/>
+                <RadzenRadioButtonList @bind-Value=@model.SexId TValue="int" Style="margin-top: 10px">
+                    <Items>
+                        <RadzenRadioButtonListItem Text="kobieta" Value="1"/>
+                        <RadzenRadioButtonListItem Text="mężczyzna" Value="2"/>
+                    </Items>
+                </RadzenRadioButtonList>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-lg-4">
+                   <RadzenButton Click=@(args => SaveCitizen()) Text="Generuj pesel i zapisz" ButtonStyle="ButtonStyle.Primary" />
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+
+@code {
+
+    readonly AddCitizenModel model = new AddCitizenModel();
+
+    void SaveCitizen()
+    {
+        if (!ValidateData(out var error))
+        {
+            notifiyService.Notify(new NotificationMessage()
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = null,
+                Detail = error
+            });
+            return;
+        }
+        
+        
+        int currentIndex = 0;
+        
+        // tworzenie nowego obywatela
+        var citizen = new Citizen()
+        {
+            Id = currentIndex + 1,
+            FirstName = model.FirstName,
+            SecondName = model.SecondName,
+            LastName = model.LastName,
+            DateOfBirth = model.DateOfBirth,
+            Sex = model.SexId == 1 ? "female" : "male"
+        };
+        
+        citizen.GetPESEL(currentIndex);
+        
+        
+    }
+
+
+    bool ValidateData(out string error)
+    {
+        error = "Nie wprowadzono wymaganych danych";
+        if (string.IsNullOrWhiteSpace(model.FirstName)) return false;
+        if (string.IsNullOrWhiteSpace(model.LastName)) return false;
+        if (model.DateOfBirth == DateTime.MinValue) return false;
+        if (model.SexId == 0) return false;
+        if (model.DateOfBirth <= DateTime.Now) return true;
+        error = "Nieprawidłowa data";
+        return false;
+    }
+    
+
+}
+
+
+               
+
 
