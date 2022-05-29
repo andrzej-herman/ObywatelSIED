@@ -1,3 +1,77 @@
 ﻿@page "/lista"
+@inject NotificationService notifiyService
+@inject ILocalStorageService _cookie
 <PageTitle>Obywatel ver 1.0</PageTitle>
-<h1>Lista</h1>
+<h1>Lista nadanych numerów PESEL</h1>
+
+
+
+@*    
+
+
+
+    //public string Sex { get; set; }
+    //public string PESEL { get; set; }
+
+
+ *@
+
+
+@if (citizens != null)
+{
+    @if (!citizens.Any())
+    {
+        <p>Brak zrejestrowanych obywateli</p>
+    }
+    else
+    {
+       <RadzenDataGrid AllowFiltering="true" FilterMode="FilterMode.Simple" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+        Data="@citizens" TItem="Citizen" LogicalFilterOperator="LogicalFilterOperator.Or">
+        <Columns>
+            <RadzenDataGridColumn TItem="Citizen" Filterable="true" Sortable="true" Property="LastName" Title="Nazwisko" Width="120px" />
+            <RadzenDataGridColumn TItem="Citizen" Filterable="true" Sortable="true" Property="Names" Title="Imiona" Width="180px" />
+            <RadzenDataGridColumn TItem="Citizen" Filterable="true" Sortable="true" Property="DateOfBirthString" Title="Data urodzenia" Width="120px" />
+            <RadzenDataGridColumn TItem="Citizen" Filterable="false" Sortable="false" Property="PESEL" Title="PESEL" Width="100px" />
+            <RadzenDataGridColumn TItem="Citizen" Filterable="false" Sortable="false" Title="Płeć" Width="60px">
+                <Template Context="data">
+                     @if (data.Sex == "male")
+                        {
+                            <RadzenImage Path="images/Male-icon.png" style="width: 32px; height: 32px;"/>
+                        }
+                        else
+                        {
+                            <RadzenImage Path="images/Female-icon.png" style="width: 40px; height: 40px; border-radius: 8px;" />
+                        }
+                    </Template>
+            </RadzenDataGridColumn>
+             <RadzenDataGridColumn TItem="Citizen" Filterable="false" Sortable="false" Title="" Width="140px">
+                <Template Context="data">
+                    <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Success" Click="() => PobierzAktUrodzenia(data.Id)">Pobierz akt urodzenia</RadzenButton>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+    }
+}
+else
+{
+    <p>Trwa ładowanie listy nadanych numerów PESEL</p>
+}
+
+@code {
+
+    IEnumerable<Citizen> citizens;
+    protected override async Task OnInitializedAsync()
+    {
+        var json = await _cookie.GetItemAsStringAsync("blazor2sied");
+        if (json == null)
+            citizens = new List<Citizen>();
+        else
+            citizens = JsonConvert.DeserializeObject<List<Citizen>>(json).OrderBy(x => x.LastName);
+    }
+
+    void PobierzAktUrodzenia(int id)
+    {
+        var citizen = citizens.FirstOrDefault(c => c.Id == id);
+    }
+}

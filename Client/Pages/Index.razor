@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject NotificationService notifiyService
+@inject ILocalStorageService _cookie
 
 <PageTitle>Obywatel ver 1.0</PageTitle>
 <h1>Formularz rejestracji Obywatela</h1>
@@ -49,9 +50,20 @@
 
 @code {
 
-    readonly AddCitizenModel model = new AddCitizenModel();
+    AddCitizenModel model = new AddCitizenModel();
+    List<Citizen> citizens;
 
-    void SaveCitizen()
+    protected override async Task OnInitializedAsync()
+    {
+        var json = await _cookie.GetItemAsStringAsync("blazor2sied");
+        if (json == null)
+            citizens = new List<Citizen>();
+        else
+            citizens = JsonConvert.DeserializeObject<List<Citizen>>(json);
+    }
+
+
+    async Task SaveCitizen()
     {
         if (!ValidateData(out var error))
         {
@@ -63,11 +75,9 @@
             });
             return;
         }
-        
-        
-        int currentIndex = 0;
-        
-        // tworzenie nowego obywatela
+
+
+        int currentIndex = citizens.Count == 0 ? 0 : citizens.Max(c => c.Id);
         var citizen = new Citizen()
         {
             Id = currentIndex + 1,
@@ -77,10 +87,19 @@
             DateOfBirth = model.DateOfBirth,
             Sex = model.SexId == 1 ? "female" : "male"
         };
-        
+
         citizen.GetPESEL(currentIndex);
-        
-        
+        citizens.Add(citizen);
+        var json = JsonConvert.SerializeObject(citizens);
+        await _cookie.SetItemAsStringAsync("blazor2sied", json);  
+        notifiyService.Notify(new NotificationMessage()
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = null,
+            Detail = "Nadano numer pesel i zapisano Obywatela"
+        });
+
+        model = new AddCitizenModel();
     }
 
 

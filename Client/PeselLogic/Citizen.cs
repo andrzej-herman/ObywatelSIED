@@ -9,11 +9,12 @@ public class Citizen
     public DateTime DateOfBirth { get; set; }
     public string Sex { get; set; }
     public string PESEL { get; set; }
+    public string Names => $"{FirstName} {SecondName}";
 
     public string DateOfBirthString
     {
         get { return DateOfBirth.ToString("dd.MM.yyyy"); }
-    } 
+    }
 
 
     public void GetPESEL(int currentIndex)
